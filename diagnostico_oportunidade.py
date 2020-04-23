@@ -4,6 +4,21 @@ import pandas as pd
 from datetime import datetime
 
 import matplotlib.pyplot as plt
+
+#configuração fonte títulos
+
+font_title = {'family': 'cursive',
+        'color':  'black',
+        'weight': 'bold',
+        'size': 26,
+        }
+
+font_axis = {'family': 'cursive',
+        'color':  'black',
+        'weight': 'bold',
+        'size': 14,
+        }
+
 import seaborn as sns
 
 #configurações do seaborn
@@ -11,11 +26,13 @@ import seaborn as sns
 sns.set_style('darkgrid')
 
 
+#Seleção de Atributos
+
 #Analisar o head do Data Frame
 
 pd.read_csv('Data_Base.csv', encoding = 'ISO-8859-1').head()
 
-#Definir nome das colunas
+#Definir nome dos atributos previsores pois estes não foram informados no Data frame.
 
 colunas = ['ID', 'Data/Hora Dia',  'Mês', 'Ano', 'D#', 'Código', 'Código 2', 'Código 3', 'Tipo de venda', 'UF', 'Código 4', 'Família', 'Produto 1', 'ABC',  'Produto 2', 'Venda Bruta col', 'Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3']
 
@@ -59,8 +76,10 @@ df.drop('Mês', inplace=True, axis=1)
 
 def heatmap():
 	crrdf = df.corr()
-	fig = plt.figure(figsize=(10,5),dpi=200)
-	plt.tight_layout()
-	sns.heatmap(crrdf).set_title('Mapa de Calor - Correlação Entre Dados').get_figure().savefig('heatmap.png')
+	fig = plt.figure(figsize=(14,13),dpi=200).tight_layout()
+	#plt.tight_layout()
+	plot = sns.heatmap(crrdf,cmap='viridis').set_title('Mapa de Calor - Correlação Entre Dados', fontdict = font_title)
+	plot.get_figure().savefig('heatmap.png')
+	return plot
 
 heatmap()
