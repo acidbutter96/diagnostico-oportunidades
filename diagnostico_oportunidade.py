@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+
 #Analisar o head do Data Frame
 
 pd.read_csv('Data_Base.csv', encoding = 'ISO-8859-1').head()
