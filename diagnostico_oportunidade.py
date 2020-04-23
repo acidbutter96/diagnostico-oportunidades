@@ -32,6 +32,11 @@ sns.set_style('darkgrid')
 #Para codificar os dados categóricos pois o algorítmo não suporta str, como no R.
 from sklearn.preprocessing import LabelEncoder
 
+#Divisão dados de treino e teste
+from sklearn.model_selection import train_test_split
+
+#Método de Naive Bayes
+from sklearn.naive_bayes import GaussianNB
 
 
 
@@ -127,7 +132,7 @@ df2.drop('Data/Hora Dia',axis=1,inplace=True)
 
 df2['Lucro'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
 
-df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3'],axis=1,inplace=True)
+df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3','Família'],axis=1,inplace=True)
 
 df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
 
@@ -143,7 +148,8 @@ df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
 
 #Modelo de Classificação
 
-#Pretendo realizar algumas previsões com relação à
+#Pretendo realizar algumas previsões com relação ao lucro total das vendas feitas ao longo do ano levando em conta, dia e hora. Peço perdão pela confusão mas as colunas do data frame não haviam índices então não sabia com quais atributos eu estava trabalhando.
+
 
 #Transformar dados categóricos (str) em números (int)
 
@@ -159,6 +165,18 @@ classe = df2['Lucro']
 #verificando as colunas
 df2.info()
 
+#problema com a coluna ABC
+
+#df2['ABC'] = df2['ABC'].apply(lambda x: str(x))
+
+df2.dropna(axis=0,inplace=True)
 #somente a primeira é não categórica
 
+
+labelencoder = LabelEncoder()
+
+categoricos = ['Tipo de venda', 'UF', 'Produto 1', 'ABC', 'Produto 2']
+
+#for n in range(len(categoricos)):
+#	previsores[:,n] = labelencoder.fit_transform(previsores[:,n])
 
