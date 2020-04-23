@@ -1,2 +1,1 @@
-# diagnostico-oportunidades
-Teste realizado pela Stefaninni para seleção de vaga como Cientista de Dados
+Repositório com arquivos do programa para teste da Stefanini
