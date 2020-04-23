@@ -152,6 +152,9 @@ df2['Lucro']=df2['Lucro'].apply(lambda x: 'Lucro' if x>= df2['Lucro'].mean() els
 
 plt.show()
 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -220,10 +223,10 @@ from sklearn.metrics import accuracy_score
 
 
 taxa_acerto = (accuracy_score(Y_teste, previsao))*100
-taxa_erro = (1 - taxa_acerto)*100
+taxa_erro = (1 - taxa_acerto/100)*100
 
 
-print('taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%'.format(taxa_acerto,taxa_erro))
+print('\n\n\n taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(taxa_acerto,taxa_erro))
 
 #Visualizaremos a matriz de confusão através da Yellow Brick
 
@@ -256,9 +259,9 @@ plt.show()
 
 
 taxa_acerto2 = (accuracy_score(Y_teste, previsoes2))*100
-taxa_erro2 = (1-taxa_acerto2)*100
+taxa_erro2 = (1-taxa_acerto2/100)*100
 
-print('taxa de acerto do modelo de Florestas Aleatórias: {}% \n---------------------\n taxa de erro do modelo de: {}%'.format(taxa_acerto,taxa_erro))
+print('\n\n\n taxa de acerto do modelo de Florestas Aleatórias: {}% \n---------------------\n taxa de erro do modelo de: {}%\n\n\n'.format(taxa_acerto,taxa_erro))
 
 #Da mesma forma podemos realizar os métodos de predição para outros dados categóricos do Data Base e a partir disso realizar um diagnóstico de oportunidade.
 
