@@ -155,6 +155,14 @@ df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
 
 #previsores: atributos que serão usados para previsão da classe
 
+#transformar 'ABC' manualmente pois possui alguns dados que não são números
+
+dic = {'A':0,'B':1,'C':2}
+
+df2 = df2[df2['ABC'].apply(lambda x: False if type(x)!= np.str else True)
+]
+
+
 previsores = df2.drop('Lucro',axis=1).values
 
 #classe: atributos que queremos prever
@@ -169,7 +177,7 @@ df2.info()
 
 #df2['ABC'] = df2['ABC'].apply(lambda x: str(x))
 
-df2.dropna(axis=0,inplace=True)
+
 #somente a primeira é não categórica
 
 
@@ -177,6 +185,10 @@ labelencoder = LabelEncoder()
 
 categoricos = ['Tipo de venda', 'UF', 'Produto 1', 'ABC', 'Produto 2']
 
-#for n in range(len(categoricos)):
-#	previsores[:,n] = labelencoder.fit_transform(previsores[:,n])
+for n in range(5):
+	previsores[:,n] = labelencoder.fit_transform(previsores[:,n])
 
+
+#Hold out
+
+X_treinamento, X_teste, Y_treinamento, Y_teste = train_test_split(previsores,classe)
