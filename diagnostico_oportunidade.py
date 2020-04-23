@@ -35,11 +35,21 @@ df['Data/Hora Dia'] = df['Data/Hora Dia'].apply(YmdHM)
 
 verificar = [len(df.iloc[:,i].value_counts().values) for i in range(len(df.columns.values))]
 
-unit = -1
+unit, index = -1, []
 for i in verificar: 
 	unit+=1 
-	if i==1: 
+	print('verificando {}'.format(colunas[unit]))
+	if i==1:
+		index.append(unit)
 		df.drop(colunas[unit], axis=1, inplace=True)
 		print('Coluna {} removida'.format(colunas[unit]))
+		#colunas.remove(colunas[unit])
 
-#remover 'Mês', 'Ano'
+for i in index:
+	colunas.remove(colunas[i])
+#remover 'Mês'
+
+colunas.remove('Mês')
+df.drop('Mês', inplace=True, axis=1)
+
+#
