@@ -26,6 +26,21 @@ import seaborn as sns
 sns.set_style('darkgrid')
 
 
+#ML
+
+
+#Para codificar os dados categóricos pois o algorítmo não suporta str, como no R.
+from sklearn.preprocessing import LabelEncoder
+
+
+
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #Seleção de Atributos
 
 #Analisar o head do Data Frame
@@ -97,26 +112,53 @@ df2 = df.drop(['ID', 'D#', 'Código',  'Código 2', 'Código 3','Código 4'],axi
 
 #todos as compras ocorrem no mesmo ano e na mesma hora (00:00) portanto só vou deixar o mês
 
-df2['Data/Hora Dia'] = df2['Data/Hora Dia'].apply(lambda x: x.month)
+df2['Mês'] = df2['Data/Hora Dia'].apply(lambda x: x.month)
+df2['Dia'] = df2['Data/Hora Dia'].apply(lambda x: x.day)
 
-df2.rename(columns={'Data/Hora Dia':'Mês'},inplace=True)
+#df2.rename(columns={'Data/Hora Dia':'Mês'},inplace=True)
+
+#remover coluna datahoradia
+
+df2.drop('Data/Hora Dia',axis=1,inplace=True)
 
 
 #Somar as vendas brutas e remover as parciais
 
 
-df2['Resultado Líquido'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
+df2['Lucro'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
 
 df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3'],axis=1,inplace=True)
+
+df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
 
 
 #verificar plot de pares
 
-pairplots(df2,hue='ABC',label='ABC')
-pairplots(df2,hue='UF',label='UF')
-pairplots(df2,hue='Produto 1',label='Produto 1')
-pairplots(df2,hue='Produto 2',label='Produto 2')
+#pairplots(df2,hue='ABC',label='ABC')
+#pairplots(df2,hue='UF',label='UF')
+#pairplots(df2,hue='Produto 1',label='Produto 1')
+#pairplots(df2,hue='Produto 2',label='Produto 2')
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #Modelo de Classificação
+
+#Pretendo realizar algumas previsões com relação à
+
+#Transformar dados categóricos (str) em números (int)
+
+#previsores: atributos que serão usados para previsão da classe
+
+previsores = df2.drop('Lucro',axis=1).values
+
+#classe: atributos que queremos prever
+
+classe = df2['Lucro']
+
+
+#verificando as colunas
+df2.info()
+
+#somente a primeira é não categórica
+
+
