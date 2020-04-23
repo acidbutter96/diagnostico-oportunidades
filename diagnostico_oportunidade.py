@@ -102,6 +102,7 @@ def heatmap(df,label='heatmap'):
 	plot.get_figure().savefig(label+'.png')
 
 heatmap(df)
+plt.show()
 
 def pairplots(df,hue=False,label=''):
 	plt.figure(figsize=(14,13),dpi=200)
@@ -134,7 +135,10 @@ df2['Lucro'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
 
 df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3','Família'],axis=1,inplace=True)
 
-df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
+#Lucro ou prejuízo
+
+
+df2['Lucro']=df2['Lucro'].apply(lambda x: 'Lucro' if x>= df2['Lucro'].mean() else 'Prejuízo')
 
 
 #verificar plot de pares
@@ -144,23 +148,26 @@ df2['Lucro']=df2['Lucro'].apply(lambda x: 1 if x>= df2['Lucro'].mean() else 0)
 #pairplots(df2,hue='Produto 1',label='Produto 1')
 #pairplots(df2,hue='Produto 2',label='Produto 2')
 
+
+
+plt.show()
+
+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #Modelo de Classificação
 
-#Pretendo realizar algumas previsões com relação ao lucro total das vendas feitas ao longo do ano levando em conta, dia e hora. Peço perdão pela confusão mas as colunas do data frame não haviam índices então não sabia com quais atributos eu estava trabalhando.
+#Pretendo realizar algumas previsões com relação ao lucro das vendas feitas ao longo do ano levando em conta, dia, hora e todos os parâmetros contidos no Data base. Peço perdão pela confusão mas as colunas do data frame não haviam índices então não sabia com quais atributos eu estava trabalhando.
 
 
 #Transformar dados categóricos (str) em números (int)
 
 #previsores: atributos que serão usados para previsão da classe
 
-#transformar 'ABC' manualmente pois possui alguns dados que não são números
+#removendo dados não 'str' do atributo ABC
 
-dic = {'A':0,'B':1,'C':2}
 
-df2 = df2[df2['ABC'].apply(lambda x: False if type(x)!= np.str else True)
-]
+df2 = df2[df2['ABC'].apply(lambda x: False if type(x)!= np.str else True)]
 
 
 previsores = df2.drop('Lucro',axis=1).values
@@ -190,5 +197,71 @@ for n in range(5):
 
 
 #Hold out
+X_treinamento, X_teste, Y_treinamento, Y_teste = train_test_split(previsores,classe,test_size=.3,random_state=3452)
 
-X_treinamento, X_teste, Y_treinamento, Y_teste = train_test_split(previsores,classe)
+
+#Naive Bayes
+
+naive_bayes = GaussianNB()
+
+#ajuste
+
+naive_bayes.fit(X_treinamento,Y_treinamento)
+
+
+#previsões de dados
+
+previsao = naive_bayes.predict(X_teste)
+
+
+#Taxa de acerto e de erro
+
+from sklearn.metrics import accuracy_score
+
+
+taxa_acerto = (accuracy_score(Y_teste, previsao))*100
+taxa_erro = (1 - taxa_acerto)*100
+
+
+print('taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%'.format(taxa_acerto,taxa_erro))
+
+#Visualizaremos a matriz de confusão através da Yellow Brick
+
+from yellowbrick.classifier import ConfusionMatrix
+
+v = ConfusionMatrix(GaussianNB())
+v.fit(X_treinamento,Y_treinamento)
+v.score(X_teste,Y_teste)
+plt.title('Naive Bayes',fontdict=font_title)
+plt.tight_layout()
+plt.savefig('ConfusionMatrix Naive Bayes.png')
+#v.poof()
+
+plt.show()
+
+#Da mesma forma pelo método de florestas aleatórias
+
+from sklearn.ensemble import RandomForestClassifier
+
+floresta = RandomForestClassifier(n_estimators = 200)
+
+floresta.fit(X_treinamento,Y_treinamento)
+
+previsoes2 = floresta.predict(X_teste)
+
+u = ConfusionMatrix(RandomForestClassifier()).fit(X_treinamento,Y_treinamento)
+u.score(X_teste,Y_teste)
+plt.title('Florestas Aleatórias',fontdict=font_title)
+plt.show()
+
+
+taxa_acerto2 = (accuracy_score(Y_teste, previsoes2))*100
+taxa_erro2 = (1-taxa_acerto2)*100
+
+print('taxa de acerto do modelo de Florestas Aleatórias: {}% \n---------------------\n taxa de erro do modelo de: {}%'.format(taxa_acerto,taxa_erro))
+
+#Da mesma forma podemos realizar os métodos de predição para outros dados categóricos do Data Base e a partir disso realizar um diagnóstico de oportunidade.
+
+#Devido à falta de tempo e às dúvidas que tive sobre os dados dispostos na tabela (cujos atributos estavam vazios, consegui chegar até aqui)
+
+#Poderíamos adotar outros métodos como o de seleção de atributos, mas os resultados estão bem próximos, talvez o modelo esteja super ajustado.
