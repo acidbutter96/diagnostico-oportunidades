@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 #configuração fonte títulos
 
-font_title = {'family': 'cursive',
+font_title = {'family': 'DejaVu Sans',
         'color':  'black',
         'weight': 'bold',
         'size': 26,
@@ -74,12 +74,49 @@ df.drop('Mês', inplace=True, axis=1)
 
 #Verificar o restante dos dados a partir das correlações entre as colunas
 
-def heatmap():
+def heatmap(df,label='heatmap'):
 	crrdf = df.corr()
 	fig = plt.figure(figsize=(14,13),dpi=200).tight_layout()
 	#plt.tight_layout()
 	plot = sns.heatmap(crrdf,cmap='viridis').set_title('Mapa de Calor - Correlação Entre Dados', fontdict = font_title)
-	plot.get_figure().savefig('heatmap.png')
-	return plot
+	plot.get_figure().savefig(label+'.png')
 
-heatmap()
+heatmap(df)
+
+def pairplots(df,hue=False,label=''):
+	plt.figure(figsize=(14,13),dpi=200)
+	plt.title('Plot de pares entre atributos', fontdict = font_title)
+	#plt.tight_layout()
+	sns.pairplot(df,hue=hue)
+	plt.savefig('pairplot'+label+'.png')
+
+
+#remover ID e dados irrelevantes
+
+df2 = df.drop(['ID', 'D#', 'Código',  'Código 2', 'Código 3','Código 4'],axis=1)
+
+#todos as compras ocorrem no mesmo ano e na mesma hora (00:00) portanto só vou deixar o mês
+
+df2['Data/Hora Dia'] = df2['Data/Hora Dia'].apply(lambda x: x.month)
+
+df2.rename(columns={'Data/Hora Dia':'Mês'},inplace=True)
+
+
+#Somar as vendas brutas e remover as parciais
+
+
+df2['Resultado Líquido'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
+
+df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3'],axis=1,inplace=True)
+
+
+#verificar plot de pares
+
+pairplots(df2,hue='ABC',label='ABC')
+pairplots(df2,hue='UF',label='UF')
+pairplots(df2,hue='Produto 1',label='Produto 1')
+pairplots(df2,hue='Produto 2',label='Produto 2')
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#Modelo de Classificação
