@@ -30,23 +30,35 @@ sns.set_style('darkgrid')
 
 
 #Para codificar os dados categóricos pois o algorítmo não suporta str, como no R.
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.compose import make_column_transformer
 
 #Divisão dados de treino e teste
 from sklearn.model_selection import train_test_split
 
+#Florestas Aleatórias
+
+from sklearn.ensemble import RandomForestClassifier
+
+
 #Método de Naive Bayes
 from sklearn.naive_bayes import GaussianNB
 
+#Taxa de acerto e de erro
+
+from sklearn.metrics import accuracy_score
+
+#Visualizaremos a matriz de confusão através da Yellow Brick
+from yellowbrick.classifier import ConfusionMatrix
 
 
 
 
-
+#Tratamento dos Dados
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#Seleção de Atributos
+
 
 #Analisar o head do Data Frame
 
@@ -101,7 +113,8 @@ def heatmap(df,label='heatmap'):
 	plot = sns.heatmap(crrdf,cmap='viridis').set_title('Mapa de Calor - Correlação Entre Dados', fontdict = font_title)
 	plot.get_figure().savefig(label+'.png')
 
-heatmap(df)
+#heatmap(df)
+
 plt.show()
 
 def pairplots(df,hue=False,label=''):
@@ -127,6 +140,98 @@ df2['Dia'] = df2['Data/Hora Dia'].apply(lambda x: x.day)
 
 df2.drop('Data/Hora Dia',axis=1,inplace=True)
 
+#criar terceiro data frame
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+#Preparação para o Categorical Encoding - v2
+
+
+df3 = df.drop(['ID', 'D#', 'Código',  'Código 2', 'Código 3','Código 4'],axis=1)
+
+#Box plot para verificar outliers
+
+sns.boxplot(data=df3.drop(['Data/Hora Dia','Tipo de venda', 'UF', 'Produto 1', 'Produto 2', 'ABC'],axis=1))
+plt.title('Box Plot Venda Bruta')
+plt.savefig('Box plot venda.png')
+plt.show()
+
+#remover outliers
+#One Hot Encoding:
+
+#antes remover os valores '[Gr.Cliente Não Encontrado]' do tipo de venda em df3
+
+df3 = df3[df3['Tipo de venda'].apply(lambda x: x!='[Gr.Cliente Não Encontrado]')]
+
+#verificar se as outras colunas possuem tipos de entradas incomuns
+
+
+df3 = df3[df3['Tipo de venda'].apply(lambda x: type(x)==np.str)]
+df3 = df3[df3['UF'].apply(lambda x: type(x)==np.str)]
+df3 = df3[df3['Família'].apply(lambda x: type(x)==np.str)]
+df3 = df3[df3['Produto 1'].apply(lambda x: type(x)==np.str)]
+
+
+#Remover outliers em atributos categóricos (os que só aparecem uma vez ou são desconhecidos)
+
+df3 = df3[df3['Produto 1'].apply(lambda x: x!='[Gr Segmento Não Encontrado]')]
+
+#df3 = df3[df3['Produto 2'].apply(lambda x: x!='[Cultura Não Encontrada]')]
+#df3 = df3[df3['Produto 2'].apply(lambda x: x!='[Cultura Não Especificada]')]
+
+df3 = df3[df3['Produto 2'].apply(lambda x: False if x=='[Cultura Não Encontrada]' else (False if x=='[Cultura Não Especificada]' else True))]
+
+
+
+df3 = df3[df3['Venda Bruta 1']!=df3['Venda Bruta 1'].max()]
+df3 = df3[df3['Venda Bruta 2']!=df3['Venda Bruta 2'].max()]
+
+categorical=df3[['Tipo de venda', 'UF', 'Família', 'Produto 1', 'ABC', 'Produto 2']]
+
+
+
+
+df3['Mês'] = df3['Data/Hora Dia'].apply(lambda x: x.month)
+df3['Dia'] = df3['Data/Hora Dia'].apply(lambda x: x.day)
+
+#df2.rename(columns={'Data/Hora Dia':'Mês'},inplace=True)
+
+#remover coluna datahoradia
+
+df3.drop('Data/Hora Dia',axis=1,inplace=True)
+
+
+
+
+#Label Encoding: preparar ABC
+
+df3 = df3[df3['ABC'].apply(lambda x: False if type(x)!= np.str else True)]
+
+
+
+#One Hot Encoding: contar categorias
+
+class df3info:
+	tipo_venda = df3['Tipo de venda'].value_counts()
+	Produto_1 = df3['Produto 1'].value_counts()
+	Produto_2 = df3['Produto 2'].value_counts()
+
+# 'Tipo de venda' possui 4 tipos diferentes de categorias
+
+df3info.tipo_venda
+df3info.Produto_1
+df3info.Produto_2
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 
 #Somar as vendas brutas e remover as parciais
 
@@ -135,12 +240,19 @@ df2['Lucro'] = df2['Venda Bruta 1']+df2['Venda Bruta 2']+df2['Venda Bruta 3']
 
 df2.drop(['Venda Bruta 1','Venda Bruta 2','Venda Bruta 3','Família'],axis=1,inplace=True)
 
-#Lucro ou prejuízo
+
+#Lucro otimizado ou não
 
 
-df2['Lucro']=df2['Lucro'].apply(lambda x: 'Lucro' if x>= df2['Lucro'].mean() else 'Prejuízo')
+df2['Lucro']=df2['Lucro'].apply(lambda x: 'Otimizado' if x>= df2['Lucro'].mean() else 'Ñ otimizado')
 
+#Remover itens que aparecem poucas vezes
 
+df2 = df2[df2['Produto 1'].apply(lambda x: x!= 'Growth Regulator')]
+
+#Remover dados irrelevantes dos produtos 2: cultura não encontrada e não especificada
+
+df2 = df2[df2['Produto 2'].apply(lambda x: False if x=='[Cultura Não Encontrada]' else (False if x=='[Cultura Não Especificada]' else True))]
 #verificar plot de pares
 
 #pairplots(df2,hue='ABC',label='ABC')
@@ -153,10 +265,8 @@ df2['Lucro']=df2['Lucro'].apply(lambda x: 'Lucro' if x>= df2['Lucro'].mean() els
 plt.show()
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #Modelo de Classificação
 
@@ -203,6 +313,17 @@ for n in range(5):
 X_treinamento, X_teste, Y_treinamento, Y_teste = train_test_split(previsores,classe,test_size=.3,random_state=3452)
 
 
+
+
+
+
+
+
+
+
+
+
+
 #Naive Bayes
 
 naive_bayes = GaussianNB()
@@ -217,20 +338,14 @@ naive_bayes.fit(X_treinamento,Y_treinamento)
 previsao = naive_bayes.predict(X_teste)
 
 
-#Taxa de acerto e de erro
-
-from sklearn.metrics import accuracy_score
-
 
 taxa_acerto = (accuracy_score(Y_teste, previsao))*100
 taxa_erro = (1 - taxa_acerto/100)*100
 
 
-print('\n\n\n taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(taxa_acerto,taxa_erro))
+print('\n\n\n taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(round(taxa_acerto,2),round(taxa_erro,2)))
 
-#Visualizaremos a matriz de confusão através da Yellow Brick
 
-from yellowbrick.classifier import ConfusionMatrix
 
 v = ConfusionMatrix(GaussianNB())
 v.fit(X_treinamento,Y_treinamento)
@@ -244,9 +359,9 @@ plt.show()
 
 #Da mesma forma pelo método de florestas aleatórias
 
-from sklearn.ensemble import RandomForestClassifier
 
-floresta = RandomForestClassifier(n_estimators = 200)
+
+floresta = RandomForestClassifier(n_estimators = 500)
 
 floresta.fit(X_treinamento,Y_treinamento)
 
@@ -261,10 +376,85 @@ plt.show()
 taxa_acerto2 = (accuracy_score(Y_teste, previsoes2))*100
 taxa_erro2 = (1-taxa_acerto2/100)*100
 
-print('\n\n\n taxa de acerto do modelo de Florestas Aleatórias: {}% \n---------------------\n taxa de erro do modelo de: {}%\n\n\n'.format(taxa_acerto,taxa_erro))
+print('\n\n\n taxa de acerto do modelo de Florestas Aleatórias: {}% \n---------------------\n taxa de erro do modelo de: {}%\n\n\n'.format(round(taxa_acerto,2),round(taxa_erro,2)))
 
 #Da mesma forma podemos realizar os métodos de predição para outros dados categóricos do Data Base e a partir disso realizar um diagnóstico de oportunidade.
 
 #Devido à falta de tempo e às dúvidas que tive sobre os dados dispostos na tabela (cujos atributos estavam vazios, consegui chegar até aqui)
 
 #Poderíamos adotar outros métodos como o de seleção de atributos, mas os resultados estão bem próximos, talvez o modelo esteja super ajustado.
+
+
+
+
+
+
+
+
+
+
+
+
+
+######### 	IMPLEMENTAÇÃO ##########
+
+#Novo modelo
+
+#para o novo modelo levantaremos em conta as oportunidades de venda que causaram prejuízo ou não, tomando em conta que o valor líquido da venda é dada pela somatória do venda bruta 1, 2 e 3.
+
+df3['Lucro'] = df3['Venda Bruta 1']+df3['Venda Bruta 2']+df3['Venda Bruta 3']
+
+#Levantando os valores da tabela e levando em conta
+
+prev = df3.drop(['Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3', 'Lucro'], axis=1)
+previsores2 = df3.drop(['Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3', 'Lucro'], axis=1).values
+
+
+#Label Encoder em ABC
+for n in [1,2,4,3,5]:
+	previsores2[:,n] = labelencoder.fit_transform(previsores2[:,n])
+
+#prev = pd.DataFrame(previsores2)
+
+#One Hot Encoder no restante
+
+
+onehotencoder = make_column_transformer( (OneHotEncoder(categories='auto', sparse=False),[0]), remainder='passthrough')
+
+X = onehotencoder.fit_transform(previsores2)
+
+
+classe2 = df3['Lucro'].apply(lambda x: 0 if x <= df3['Lucro'].mean() else 1)
+
+
+
+X_treino2, X_teste2, Y_treino2, Y_teste2 = train_test_split(X,classe2, test_size=.3, random_state=3242)
+
+
+
+#Treinamento do modelo
+
+nb2 = GaussianNB()
+
+nb2.fit(X_treino2,Y_treino2)
+
+prev2 = nb2.predict(X_teste2)
+
+taxa_acerto2 = (accuracy_score(Y_teste2, prev2))*100
+taxa_erro2 = (1 - taxa_acerto2/100)*100
+
+
+print('\n\n\n taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(round(taxa_acerto2,2),round(taxa_erro2,2)))
+
+
+v2 = ConfusionMatrix(GaussianNB())
+v2.fit(X_treino2,Y_treino2)
+v2.score(X_teste2,Y_teste2)
+plt.title('Naive Bayes',fontdict=font_title)
+plt.tight_layout()
+plt.savefig('ConfusionMatrix Naive Bayes 2.png')
+#v.poof()
+
+#plt.show()
+
+
