@@ -51,7 +51,7 @@ from sklearn.metrics import accuracy_score
 #Visualizaremos a matriz de confusão através da Yellow Brick
 from yellowbrick.classifier import ConfusionMatrix
 
-
+# Autor: Marcos Pereira <marcos.p.10@hotmail.com>
 
 
 #Tratamento dos Dados
@@ -120,7 +120,7 @@ plt.show()
 def pairplots(df,hue=False,label=''):
 	plt.figure(figsize=(14,13),dpi=200)
 	plt.title('Plot de pares entre atributos', fontdict = font_title)
-	#plt.tight_layout()
+	plt.tight_layout()
 	sns.pairplot(df,hue=hue)
 	plt.savefig('pairplot'+label+'.png')
 
@@ -139,6 +139,9 @@ df2['Dia'] = df2['Data/Hora Dia'].apply(lambda x: x.day)
 #remover coluna datahoradia
 
 df2.drop('Data/Hora Dia',axis=1,inplace=True)
+
+
+#----- versão 2 -----
 
 #criar terceiro data frame
 
@@ -160,15 +163,18 @@ plt.title('Box Plot Venda Bruta')
 plt.savefig('Box plot venda.png')
 plt.show()
 
+df3=df3[df3['Produto 1'].apply(lambda x: x!= df3['Produto 1'].max())]
+
 #remover outliers
 #One Hot Encoding:
 
-#antes remover os valores '[Gr.Cliente Não Encontrado]' do tipo de venda em df3
+#Remover outliers em atributos categóricos (os que só aparecem uma vez ou são desconhecidos)
 
 df3 = df3[df3['Tipo de venda'].apply(lambda x: x!='[Gr.Cliente Não Encontrado]')]
+df3 = df3[df3['Produto 2'].apply(lambda x: False if x=='[Cultura Não Encontrada]' else (False if x=='[Cultura Não Especificada]' else True))]
+df3 = df3[df3['Produto 1'].apply(lambda x: x!='[Gr Segmento Não Encontrado]')]
 
 #verificar se as outras colunas possuem tipos de entradas incomuns
-
 
 df3 = df3[df3['Tipo de venda'].apply(lambda x: type(x)==np.str)]
 df3 = df3[df3['UF'].apply(lambda x: type(x)==np.str)]
@@ -176,23 +182,17 @@ df3 = df3[df3['Família'].apply(lambda x: type(x)==np.str)]
 df3 = df3[df3['Produto 1'].apply(lambda x: type(x)==np.str)]
 
 
-#Remover outliers em atributos categóricos (os que só aparecem uma vez ou são desconhecidos)
-
-df3 = df3[df3['Produto 1'].apply(lambda x: x!='[Gr Segmento Não Encontrado]')]
-
 #df3 = df3[df3['Produto 2'].apply(lambda x: x!='[Cultura Não Encontrada]')]
 #df3 = df3[df3['Produto 2'].apply(lambda x: x!='[Cultura Não Especificada]')]
-
-df3 = df3[df3['Produto 2'].apply(lambda x: False if x=='[Cultura Não Encontrada]' else (False if x=='[Cultura Não Especificada]' else True))]
-
 
 
 df3 = df3[df3['Venda Bruta 1']!=df3['Venda Bruta 1'].max()]
 df3 = df3[df3['Venda Bruta 2']!=df3['Venda Bruta 2'].max()]
+df3 = df3[df3['Venda Bruta 2']!=df3['Venda Bruta 2'].min()]
+df3 = df3[df3['Venda Bruta 2']!=df3['Venda Bruta 2'].min()]
 
-categorical=df3[['Tipo de venda', 'UF', 'Família', 'Produto 1', 'ABC', 'Produto 2']]
 
-
+#categorical=df3[['Tipo de venda', 'UF', 'Família', 'Produto 1', 'ABC', 'Produto 2']]
 
 
 df3['Mês'] = df3['Data/Hora Dia'].apply(lambda x: x.month)
@@ -203,8 +203,6 @@ df3['Dia'] = df3['Data/Hora Dia'].apply(lambda x: x.day)
 #remover coluna datahoradia
 
 df3.drop('Data/Hora Dia',axis=1,inplace=True)
-
-
 
 
 #Label Encoding: preparar ABC
@@ -257,8 +255,8 @@ df2 = df2[df2['Produto 2'].apply(lambda x: False if x=='[Cultura Não Encontrada
 
 #pairplots(df2,hue='ABC',label='ABC')
 #pairplots(df2,hue='UF',label='UF')
-#pairplots(df2,hue='Produto 1',label='Produto 1')
-#pairplots(df2,hue='Produto 2',label='Produto 2')
+#pairplots(df2,hue='Produto 1',label='Produto 12')
+#pairplots(df2,hue='Produto 2',label='Produto 22')
 
 
 
@@ -361,7 +359,7 @@ plt.show()
 
 
 
-floresta = RandomForestClassifier(n_estimators = 500)
+floresta = RandomForestClassifier(n_estimators = 200)
 
 floresta.fit(X_treinamento,Y_treinamento)
 
@@ -370,6 +368,7 @@ previsoes2 = floresta.predict(X_teste)
 u = ConfusionMatrix(RandomForestClassifier()).fit(X_treinamento,Y_treinamento)
 u.score(X_teste,Y_teste)
 plt.title('Florestas Aleatórias',fontdict=font_title)
+plt.savefig('ConfusionMatrix ensemble 1.png')
 plt.show()
 
 
@@ -406,17 +405,18 @@ df3['Lucro'] = df3['Venda Bruta 1']+df3['Venda Bruta 2']+df3['Venda Bruta 3']
 
 #Levantando os valores da tabela e levando em conta
 
-prev = df3.drop(['Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3', 'Lucro'], axis=1)
+#prev = df3.drop(['Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3', 'Lucro'], axis=1)
+
 previsores2 = df3.drop(['Venda Bruta 1', 'Venda Bruta 2', 'Venda Bruta 3', 'Lucro'], axis=1).values
 
 
-#Label Encoder em ABC
+#Label Encoder aos dados categóricos
 for n in [1,2,4,3,5]:
 	previsores2[:,n] = labelencoder.fit_transform(previsores2[:,n])
 
 #prev = pd.DataFrame(previsores2)
 
-#One Hot Encoder no restante
+#One Hot Encoder em tipo de vendas
 
 
 onehotencoder = make_column_transformer( (OneHotEncoder(categories='auto', sparse=False),[0]), remainder='passthrough')
@@ -424,7 +424,7 @@ onehotencoder = make_column_transformer( (OneHotEncoder(categories='auto', spars
 X = onehotencoder.fit_transform(previsores2)
 
 
-classe2 = df3['Lucro'].apply(lambda x: 0 if x <= df3['Lucro'].mean() else 1)
+classe2 = df3['Lucro'].apply(lambda x: 0 if x < df3['Lucro'].mean() else 1)
 
 
 
@@ -444,7 +444,7 @@ taxa_acerto2 = (accuracy_score(Y_teste2, prev2))*100
 taxa_erro2 = (1 - taxa_acerto2/100)*100
 
 
-print('\n\n\n taxa de acerto do modelo de Naive Bayes: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(round(taxa_acerto2,2),round(taxa_erro2,2)))
+print('\n\n\n taxa de acerto do modelo de Naive Bayes df3: {}% \n---------------------\n taxa de erro do modelo de Naive Bayes: {}%\n\n\n'.format(round(taxa_acerto2,2),round(taxa_erro2,2)))
 
 
 v2 = ConfusionMatrix(GaussianNB())
@@ -455,6 +455,29 @@ plt.tight_layout()
 plt.savefig('ConfusionMatrix Naive Bayes 2.png')
 #v.poof()
 
-#plt.show()
+plt.show()
+plt.show()
 
 
+#Florestas aleatórias
+
+floresta2 = RandomForestClassifier(n_estimators = 200)
+
+floresta2.fit(X_treino2,Y_treino2)
+
+previsoes2 = floresta2.predict(X_teste2)
+
+U = ConfusionMatrix(RandomForestClassifier()).fit(X_treino2,Y_treino2)
+U.score(X_teste2,Y_teste2)
+plt.title('Florestas Aleatórias 2',fontdict=font_title)
+plt.show()
+plt.tight_layout()
+plt.savefig('ConfusionMatrix Florestas.png')
+
+taxa_acerto3 = (accuracy_score(Y_teste2, previsoes2))*100
+taxa_erro3 = (1-taxa_acerto3/100)*100
+
+print('\n\n\n taxa de acerto do modelo de Florestas Aleatórias df3: {}% \n---------------------\n taxa de erro do modelo de: {}%\n\n\n'.format(round(taxa_acerto3,2),round(taxa_erro3,2)))
+
+
+#Comparar probabilidades 
